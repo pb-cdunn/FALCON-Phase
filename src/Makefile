@@ -5,20 +5,24 @@ SRC = matrix.c bam_filt.c count_motif.c dna.c run_phasing.c string_parser.c
 
 CFLAG=-Wall -O3
 
-INCLUDE=-I../htslib -Isrc 
+INCLUDE:=-Isrc $(shell pkg-config --cflags zlib htslib)
+LDFLAGS:=$(shell pkg-config --libs zlib htslib bzip2)
+#-llzma
 
 all: ../bin/falcon-phase
 	@echo "\n\n[INFO] build OK, found falcon-phase!\n\n"
 
-../htslib/libhts.a:
-	cd ../htslib && $(MAKE)
+#../htslib/libhts.a:
+#	cd ../htslib && $(MAKE)
 
-../bin/falcon-phase: ../bin ../htslib/libhts.a main.c $(OBJ)
-	gcc $(CFLAG) main.c $(OBJ) $(INCLUDE) ../htslib/libhts.a  -lbz2 -llzma -lz -lm -lpthread  -o ../bin/falcon-phase
+../bin/falcon-phase: main.c $(OBJ) | ../bin
+	gcc $(CFLAG) main.c $(OBJ) $(INCLUDE) $(LDFLAGS) -lbz2 -lm -lpthread  -o ../bin/falcon-phase
 
-$(OBJ) : %.o : %.c ../htslib/libhts.a
+$(OBJ) : %.o : %.c
 	gcc $(CFLAG) $(INCLUDE) -c $< -o $@
 
+../bin:
+	mkdir -p ../bin
 
 clean:
 	@rm -rf *.o; rm -rf ../bin/falcon-phase
